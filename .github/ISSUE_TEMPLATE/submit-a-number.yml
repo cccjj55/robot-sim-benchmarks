@@ -1,0 +1,48 @@
+name: submit a number
+description: Add or correct a row in the tables
+title: "[number] <engine> <task> — <claim in a few words>"
+labels: ["claim"]
+body:
+  - type: input
+    id: claim
+    attributes:
+      label: The claim
+      description: Quote the source, do not paraphrase it into something rounder.
+      placeholder: e.g. flat terrain in under 4 minutes
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware
+      description: GPU/CPU model and count. Write "not pinned" if the source does not say.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Source link
+      description: The exact place — paper section, README anchor, release note.
+    validations:
+      required: true
+  - type: dropdown
+    id: label
+    attributes:
+      label: Evidence label
+      options:
+        - UPSTREAM (quoted from the author)
+        - 3P (reproduced by someone else, with their hardware)
+        - MEASURED (artifact committed in a public repo)
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Command and configuration
+      description: How the number was produced. Link the artifact if there is one.

@@ -1,0 +1,58 @@
+# Structured copy of the tables in README.md.
+# One entry per claim. `label` follows docs/evidence-rules.md.
+# Keep `hardware` honest: write "not pinned" when the source does not say.
+
+schema: 1
+updated: 2026-11-18
+
+claims:
+  - id: isaacgym-anymal-minutes
+    engine: Isaac Gym
+    task: ANYmal locomotion (PPO)
+    claim: flat terrain trained in under 4 minutes; uneven terrain in about 20 minutes
+    hardware: single workstation GPU (model not pinned in the paper)
+    source:
+      type: paper
+      title: Learning to Walk in Minutes Using Massively Parallel Deep Reinforcement Learning
+      venue: CoRL 2021
+      url: https://arxiv.org/abs/2109.11978
+    code: https://github.com/leggedrobotics/legged_gym
+    label: UPSTREAM
+
+  - id: isaacgym-speedup
+    engine: Isaac Gym
+    task: general RL training, physics and network on one GPU
+    claim: 2-3 orders of magnitude faster than CPU simulator plus GPU network training
+    hardware: single GPU (model not pinned in the paper)
+    source:
+      type: paper
+      title: Isaac Gym - High Performance GPU-Based Physics Simulation For Robot Learning
+      url: https://arxiv.org/abs/2108.10470
+    label: UPSTREAM
+
+  - id: playground-minutes
+    engine: MuJoCo Playground (MJX)
+    task: quadrupeds, humanoids, dexterous hands, arms; state and pixel inputs
+    claim: train policies in minutes on a single GPU; zero-shot sim-to-real
+    hardware: single GPU (model not pinned in the abstract)
+    source:
+      type: paper
+      title: MuJoCo Playground
+      url: https://arxiv.org/abs/2502.08844
+    code: https://github.com/google-deepmind/mujoco_playground
+    label: UPSTREAM
+
+  - id: cartpole-cpu-vs-mjx
+    engine: MuJoCo 4.0.1 vs MJX on CPU
+    task: cart-pole, dt=0.002, 200 steps per run, 8/32/64 environments
+    claim: MuJoCo python loop flat at about 212k env-steps/s; MJX 317k / 450k / 522k at 8 / 32 / 64 envs
+    hardware: RTX 5070 Ti Laptop 12 GB, WSL2 Ubuntu 24.04, 24 cores (CPU-only run; no CUDA jaxlib)
+    source:
+      type: repo
+      title: sim-throughput-benchmark
+      url: https://github.com/cccjj55/sim-throughput-benchmark
+    artifact: results/latest.md, results/accuracy.md
+    label: MEASURED
+    note: >
+      Shows the Python loop, not the integrator, was the limit at these sizes. Does not say anything
+      about GPU throughput, which is the row this repo is still missing.
