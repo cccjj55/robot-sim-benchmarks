@@ -90,7 +90,37 @@ Starting points that are actually runnable, in the order I would read them.
 
 ---
 
-## 4. Motion control: where the milliseconds actually go
+## 4. How to read a speedup (six questions)
+
+Before you put a number in a slide, answer these. If any answer is "don't know", the number is decoration.
+
+1. **Baseline what?** A speedup exists only against a named alternative. "10× faster" without a baseline is a mood.
+2. **On which hardware?** The same code moves 3× between a laptop 4070 and an A100. GPU model, count, memory.
+3. **Which version?** Physics engines change contact solvers between minor releases. Commit hash or version tag.
+4. **What task and scene size?** 4k envs of cart-pole and 4k envs of a 20-DoF quadruped on rough terrain are not the same measurement.
+5. **Which metric?** env-steps/s, wall-clock-to-reward, samples-to-threshold, and real-time factor are four different numbers. A paper that reports one and you quote another is a mismatch, not a result.
+6. **How noisy?** One run is an anecdote. Best-of-three without spread is still an anecdote.
+
+A useful habit: whenever you read "X is N× faster", write down what question 1 through 5 would need to be true.
+Most of the time you cannot fill them in, and that tells you how much weight the claim can carry.
+
+## 5. Quadruped simulation suites at a glance
+
+Descriptive, not ranked. "Sim2real" means the suite ships an actuator model, latency model or domain randomisation
+that the authors used on hardware.
+
+| suite | engine | tasks | sim2real support | notes |
+| --- | --- | --- | --- | --- |
+| [legged_gym](https://github.com/leggedrobotics/legged_gym) | Isaac Gym | ANYmal / Cassie / A1 locomotion, terrain curriculum | actuator network + terrain curriculum from the paper | smallest readable codebase for the 4-minute result |
+| [IsaacLab](https://github.com/isaac-sim/IsaacLab) | Isaac Sim (PhysX 5) | legged, manipulators, sensors, many envs | yes, plus sensor simulation | heavier install, actively maintained |
+| [MuJoCo Playground](https://github.com/google-deepmind/mujoco_playground) | MJX | quadruped, humanoid, hands, arms | actuator + latency modelling in the task configs | `pip install playground`, lowest setup cost |
+| [unitree_rl_gym](https://github.com/unitreerobotics/unitree_rl_gym) | Isaac Gym | Go2 / A1 / H1 | ships sim2sim scripts (Isaac to MuJoCo) | the sim2sim path is the useful part |
+| [walk-these-ways](https://github.com/Improbable-AI/walk-these-ways) | Isaac Gym | rapid locomotion adaptation, teacher-student | privileged training + adaptation module | good reading for privileged learning |
+
+Pick by what you need to prove, not by stars: to prove *throughput*, MuJoCo Playground gets you to a running
+number in one evening; to prove *sim2real discipline*, legged_gym or walk-these-ways show the whole pipeline.
+
+## 6. Motion control: where the milliseconds actually go
 
 Real-time loops are the part of this field where claims age fastest and matter most.
 
@@ -106,7 +136,7 @@ and are labelled there as synthetic until a board is attached.
 
 ---
 
-## 5. What this repo refuses to do
+## 7. What this repo refuses to do
 
 - Quote a speedup without the baseline it was measured against.
 - Quote a throughput without the hardware.
