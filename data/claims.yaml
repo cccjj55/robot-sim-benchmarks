@@ -3,7 +3,7 @@
 # Keep `hardware` honest: write "not pinned" when the source does not say.
 
 schema: 1
-updated: 2026-11-18
+updated: 2026-11-22
 
 claims:
   - id: isaacgym-anymal-minutes
@@ -56,3 +56,31 @@ claims:
     note: >
       Shows the Python loop, not the integrator, was the limit at these sizes. Does not say anything
       about GPU throughput, which is the row this repo is still missing.
+
+  - id: envpool-mujoco-ant
+    engine: EnvPool (C++ threadpool)
+    task: MuJoCo Ant-v3 simulation throughput
+    claim: "~3M raw simulation steps/sec on MuJoCo Ant-v3 (~20x over Python subprocess baseline)"
+    hardware: NVIDIA DGX-A100 (256 CPU cores)
+    source:
+      type: repo
+      title: "EnvPool: A Highly Parallelized Reinforcement Learning Environment Execution Engine"
+      venue: NeurIPS 2022
+      url: https://github.com/sail-sg/envpool#readme
+    code: https://github.com/sail-sg/envpool
+    label: UPSTREAM
+
+  - id: parallel-envs-cpu-openmp
+    engine: MuJoCo 4.0.1 (Python vs multiprocessing vs mujoco.rollout vs C++17 OpenMP)
+    task: 1-body & 12-body chains, 48 tasks x 4,000 steps/task
+    claim: "1body: py serial 968k/s, threads w=12 51k/s (0.05x), proc_reuse w=12 5.43M/s, mj_rollout 6.44M/s, cpp_openmp w=12 10.75M/s (11.11x); 12body: 104k/s -> 566k/s (5.45x)"
+    hardware: Intel i7-14650HX (WSL2 Ubuntu 24.04, 6 physical cores / 12 threads), gcc 16.2.0
+    source:
+      type: repo
+      title: parallel-envs v0.2.0
+      url: https://github.com/cccjj55/parallel-envs
+    artifact: docs/parallel_scaling.svg
+    label: MEASURED
+    note: >
+      Moving only the stepping loop to C++ (1 thread) already gives 2.60x on 1body (62% was Python FFI
+      overhead) and 1.10x on 12body. On 12body, 6 physical cores saturate around ~5.5x-5.7x.

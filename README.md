@@ -6,7 +6,7 @@ with the hardware, the version and the link, and an honest column saying whether
 This is a curation repo. **None of the numbers in the tables below are mine.** They are quoted from papers and
 repositories, and every row carries the label `UPSTREAM` until a third party repeats the measurement.
 My own measurements live in [sim-throughput-benchmark](https://github.com/cccjj55/sim-throughput-benchmark)
-and are labelled `MEASURED`.
+and [parallel-envs](https://github.com/cccjj55/parallel-envs) and are labelled `MEASURED`.
 
 Why bother: the field is full of "10× faster" with no baseline, no hardware and no version. A claim you can't
 trace is a claim you can't use in a design review. This repo keeps the traceable ones in one place and marks
@@ -34,6 +34,8 @@ A row without a hardware field is not a row. A "faster" without a baseline is no
 | Isaac Gym | general RL training | **2–3 orders of magnitude** faster than CPU-sim + GPU-network setups | single GPU | Makoviychuk et al., [arXiv:2108.10470](https://arxiv.org/abs/2108.10470) | `UPSTREAM` |
 | MuJoCo Playground (MJX) | quadrupeds, humanoids, hands, arms | "train policies **in minutes** on a single GPU", zero-shot sim-to-real | single GPU (model not pinned in the abstract) | Zakka et al., [arXiv:2502.08844](https://arxiv.org/abs/2502.08844) | `UPSTREAM` |
 | MuJoCo / MJX (cart-pole) | throughput microbenchmark | MuJoCo CPU **212k** env-steps/s; MJX on CPU **522k** at 64 envs; MJX scales with env count, the Python loop does not | RTX 5070 Ti Laptop 12 GB, WSL2, 24 cores | [sim-throughput-benchmark](https://github.com/cccjj55/sim-throughput-benchmark) | `MEASURED` |
+| EnvPool (C++ threadpool) | MuJoCo `Ant-v3` | **~3M** raw simulation steps/sec (~20× over Python subprocess baseline) | NVIDIA DGX-A100 (256 CPU cores) | [sail-sg/envpool](https://github.com/sail-sg/envpool#readme) ([arXiv:2206.10558](https://arxiv.org/abs/2206.10558)) | `UPSTREAM` |
+| MuJoCo 4.0.1 (Python vs MP vs `mujoco.rollout` vs C++ OpenMP) | 1-body & 12-body chains (48 tasks × 4k steps) | `1body`: py serial 968k/s, threads w=12 51k/s (0.05×), `proc_reuse` 5.43M/s, C++ OpenMP **10.75M/s (11.11×)**; `12body`: 104k → **566k–587k/s** | Intel i7-14650HX (WSL2, 6 physical cores / 12 threads), gcc 16.2.0 | [parallel-envs v0.2.0](https://github.com/cccjj55/parallel-envs) | `MEASURED` |
 
 Two things this table already shows, without running anything:
 
