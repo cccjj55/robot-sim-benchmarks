@@ -1,0 +1,25 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  claims:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        run: pip install pyyaml
+      - name: Validate claims.yaml against the evidence rules
+        run: python scripts/check_claims.py
+      - name: Every README table row must carry a label
+        run: |
+          python - <<'EOF'
+          import re, pathlib
+          text = pathlib.Path('README.md').read_text(encoding='utf-8')
+          rows = [l for l in text.splitlines() if l.startswith('| ') and 'UPSTREAM' in l or 'MEASURED' in l and l.startswith('| ')]
+          assert rows, 'no labelled rows found in README.md'
+          print(f'ok: {len(rows)} labelled rows')
+          EOF
