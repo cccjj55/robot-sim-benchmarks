@@ -3,7 +3,7 @@
 # Keep `hardware` honest: write "not pinned" when the source does not say.
 
 schema: 1
-updated: 2026-11-22
+updated: 2026-11-26
 
 claims:
   - id: isaacgym-anymal-minutes
@@ -87,10 +87,10 @@ claims:
 
   - id: gpu-kernels-softmax-rewrite
     engine: CUDA 13.5 on RTX 5070 Ti Laptop (sm_120) vs 12-thread CPU
-    task: axpy (16.7M doubles), softmax (4.2M doubles), tiled matmul (n=512, fp32/fp64)
+    task: axpy (16.7M doubles), softmax (1.05M doubles), tiled matmul (n=512, fp32/fp64)
     claim: >
-      axpy 402.8 GB/s (6.9x CPU 58.4); matmul fp64 445.6 GFLOP/s (6.3x CPU 70.6);
-      softmax one-block 0.26 Gelem/s (0.22x CPU) -> grid-stride 5.90 Gelem/s (4.9x CPU, 22.9x over the block version)
+      axpy 402.4 GB/s (6.9x CPU 58.4); matmul fp64 444.4 GFLOP/s (6.3x CPU 70.6);
+      softmax one-block 0.27 Gelem/s (0.22x CPU) -> grid-stride + device scalars 8.65 Gelem/s (7.2x CPU, 32.3x over the block version)
     hardware: RTX 5070 Ti Laptop 12 GB (sm_120), i7-14650HX 12 threads, gcc 16.2.0, nvcc 13.5
     source:
       type: repo
@@ -99,22 +99,23 @@ claims:
     artifact: docs/kernels_gpu.svg
     label: MEASURED
     note: >
-      The naive port being 4.5x slower than the CPU is the useful row, not the 6-7x ones: launch geometry
-      decided it, and the rewrite changed only geometry and reduction structure.
+      All GPU kernels run on non-zero deterministic inputs and pass CPU reference max|diff| before timing.
+      Launch geometry and removing host round-trips drove the 32.3x softmax jump.
 
   - id: gpu-cg-crossover
     engine: GPU CG vs 12-thread CPU CG on one FEM matrix
     task: 2D P1 Poisson, 159k and 638k DOF, tol 1e-10
     claim: >
-      GPU end-to-end CG 2.07x at 638k DOF (465 vs 962 ms) but 0.44x at 159k DOF (147 vs 65 ms);
-      SpMV alone 392.9 GB/s equals the measured device copy bandwidth 392.3 GB/s
+      GPU v1 (3 host syncs/iter) 2.07x at 638k DOF (465 vs 962 ms) and 0.44x at 159k DOF (147 vs 65 ms);
+      GPU v2 (device-resident loop, sync every 20 iters) hits 1.15x at 159k DOF (56 ms) and 2.91x at 638k DOF (331 ms);
+      SpMV alone 392.9 GB/s equals measured device copy bandwidth 392.3 GB/s
     hardware: RTX 5070 Ti Laptop 12 GB, i7-14650HX 12 threads, nvcc 13.5
     source:
       type: repo
-      title: cae-parallel-solver v1.0.0
+      title: cae-parallel-solver v1.1.0
       url: https://github.com/cccjj55/cae-parallel-solver
     artifact: docs/gpu_cg.svg
     label: MEASURED
     note: >
-      Three dot products per iteration dominate when SpMV is only 19 us; sustained SpMV drops from
-      392.9 to 192.8 GB/s after 3,000 repetitions, so burst numbers are optimistic.
+      Three dot-product round trips per iteration dominated when SpMV took 19 us; moving scalars and reductions
+      onto the device flipped 159k DOF from 0.44x to 1.15x. Sustained SpMV drops from 392.9 to 192.8 GB/s after 3,000 reps.
