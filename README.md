@@ -5,8 +5,12 @@ with the hardware, the version and the link, and an honest column saying whether
 
 This is a curation repo. **None of the numbers in the tables below are mine.** They are quoted from papers and
 repositories, and every row carries the label `UPSTREAM` until a third party repeats the measurement.
-My own measurements live in [sim-throughput-benchmark](https://github.com/cccjj55/sim-throughput-benchmark)
-and [parallel-envs](https://github.com/cccjj55/parallel-envs) and are labelled `MEASURED`.
+My own measurements live in [sim-dt-pareto](https://github.com/cccjj55/sim-dt-pareto),
+[mujoco-omp-rollout](https://github.com/cccjj55/mujoco-omp-rollout), [cuda-omp-roofline](https://github.com/cccjj55/cuda-omp-roofline), and [fem-diffusion-cuda](https://github.com/cccjj55/fem-diffusion-cuda), and are labelled `MEASURED`.
+
+> Why this repo exists: when I switched from multiphysics CAE (COMSOL/FEM) into robot simulation, every README promised "100x faster" or "millions of steps/s" without saying which GPU, which `dt`, whether it included resets, or whether a contact-rich hand was inside. This ledger puts vendor quotes (`UPSTREAM`), third-party checks (`3P`), and my own repo artifacts (`MEASURED`) side by side so numbers never float away from their hardware and commit.
+
+![claims overview](docs/claims_overview.svg)
 
 Why bother: the field is full of "10× faster" with no baseline, no hardware and no version. A claim you can't
 trace is a claim you can't use in a design review. This repo keeps the traceable ones in one place and marks
@@ -33,9 +37,9 @@ A row without a hardware field is not a row. A "faster" without a baseline is no
 | Isaac Gym | ANYmal locomotion (PPO) | flat terrain trained **under 4 min**, uneven terrain **~20 min** | single workstation GPU (source does not pin the model) | Rudin et al., CoRL 2021, [arXiv:2109.11978](https://arxiv.org/abs/2109.11978) | `UPSTREAM` |
 | Isaac Gym | general RL training | **2–3 orders of magnitude** faster than CPU-sim + GPU-network setups | single GPU | Makoviychuk et al., [arXiv:2108.10470](https://arxiv.org/abs/2108.10470) | `UPSTREAM` |
 | MuJoCo Playground (MJX) | quadrupeds, humanoids, hands, arms | "train policies **in minutes** on a single GPU", zero-shot sim-to-real | single GPU (model not pinned in the abstract) | Zakka et al., [arXiv:2502.08844](https://arxiv.org/abs/2502.08844) | `UPSTREAM` |
-| MuJoCo / MJX (cart-pole) | throughput microbenchmark | MuJoCo CPU **212k** env-steps/s; MJX on CPU **522k** at 64 envs; MJX scales with env count, the Python loop does not | RTX 5070 Ti Laptop 12 GB, WSL2, 24 cores | [sim-throughput-benchmark](https://github.com/cccjj55/sim-throughput-benchmark) | `MEASURED` |
+| MuJoCo / MJX (cart-pole) | throughput microbenchmark | MuJoCo CPU **212k** env-steps/s; MJX on CPU **522k** at 64 envs; MJX scales with env count, the Python loop does not | RTX 5070 Ti Laptop 12 GB, WSL2, 24 cores | [sim-dt-pareto](https://github.com/cccjj55/sim-dt-pareto) | `MEASURED` |
 | EnvPool (C++ threadpool) | MuJoCo `Ant-v3` | **~3M** raw simulation steps/sec (~20× over Python subprocess baseline) | NVIDIA DGX-A100 (256 CPU cores) | [sail-sg/envpool](https://github.com/sail-sg/envpool#readme) ([arXiv:2206.10558](https://arxiv.org/abs/2206.10558)) | `UPSTREAM` |
-| MuJoCo 4.0.1 (Python vs MP vs `mujoco.rollout` vs C++ OpenMP) | 1-body & 12-body chains (48 tasks × 4k steps) | `1body`: py serial 968k/s, threads w=12 51k/s (0.05×), `proc_reuse` 5.43M/s, C++ OpenMP **10.75M/s (11.11×)**; `12body`: 104k → **566k–587k/s** | Intel i7-14650HX (WSL2, 6 physical cores / 12 threads), gcc 16.2.0 | [parallel-envs v0.2.0](https://github.com/cccjj55/parallel-envs) | `MEASURED` |
+| MuJoCo 4.0.1 (Python vs MP vs `mujoco.rollout` vs C++ OpenMP) | 1-body & 12-body chains (48 tasks × 4k steps) | `1body`: py serial 968k/s, threads w=12 51k/s (0.05×), `proc_reuse` 5.43M/s, C++ OpenMP **10.75M/s (11.11×)**; `12body`: 104k → **566k–587k/s** | Intel i7-14650HX (WSL2, 6 physical cores / 12 threads), gcc 16.2.0 | [mujoco-omp-rollout v1.1.0](https://github.com/cccjj55/mujoco-omp-rollout) | `MEASURED` |
 
 Two things this table already shows, without running anything:
 
@@ -133,7 +137,18 @@ Real-time loops are the part of this field where claims age fastest and matter m
 - `SCHED_FIFO` removes CFS scheduling noise but not interrupt or SMI jitter; `PREEMPT_RT` removes most of the rest.
   Measure `P99` and `max`, not the mean — the mean is always fine.
 
-Measured jitter numbers from this account live in [rt-joint-control](https://github.com/cccjj55/rt-joint-control)
+Measured jitter numbers from this account live in [servo-frame-probe](https://github.com/cccjj55/servo-frame-probe)
+
+## Wanted rows (`good first issue`)
+
+If you already have a reproducible log (`yaml` / `csv` / `json` + exact command + GPU/CPU model), PRs and issues are very welcome for these open gaps:
+
+| category | engine / solver | what is missing (`3P` or `MEASURED`) | issue template |
+| --- | --- | --- | --- |
+| Physics rollout | **MuJoCo MJX (CUDA)** | `sim-dt-pareto` cart-pole & humanoid `--device cuda` env-steps/s on Ada / Blackwell / Hopper GPUs | [submit a number](https://github.com/cccjj55/sim-claims-ledger/issues/new?template=submit-a-number.yml) |
+| Physics rollout | **Isaac Lab / PhysX 5** | Same cart-pole / Ant task with explicit `dt`, `substeps`, and reset cost separated | [submit a number](https://github.com/cccjj55/sim-claims-ledger/issues/new?template=submit-a-number.yml) |
+| Physics rollout | **Genesis** | Multi-GPU & contact-rich manipulation FPS with exact scene / solver iterations | [submit a number](https://github.com/cccjj55/sim-claims-ledger/issues/new?template=submit-a-number.yml) |
+| Sparse CAE | **FEM / Halo solvers** | `fem-diffusion-cuda --graded --precond` (`nx=400/800`) and `jacobi-halo-mpi` (`isend` vs `sendrecv`) across multi-node or AMD EPYC hosts | [submit a number](https://github.com/cccjj55/sim-claims-ledger/issues/new?template=submit-a-number.yml) |
 and are labelled there as synthetic until a board is attached.
 
 ---

@@ -49,8 +49,8 @@ claims:
     hardware: RTX 5070 Ti Laptop 12 GB, WSL2 Ubuntu 24.04, 24 cores (CPU-only run; no CUDA jaxlib)
     source:
       type: repo
-      title: sim-throughput-benchmark
-      url: https://github.com/cccjj55/sim-throughput-benchmark
+      title: sim-dt-pareto
+      url: https://github.com/cccjj55/sim-dt-pareto
     artifact: results/latest.md, results/accuracy.md
     label: MEASURED
     note: >
@@ -70,15 +70,15 @@ claims:
     code: https://github.com/sail-sg/envpool
     label: UPSTREAM
 
-  - id: parallel-envs-cpu-openmp
+  - id: mujoco-omp-rollout-cpu
     engine: MuJoCo 4.0.1 (Python vs multiprocessing vs mujoco.rollout vs C++17 OpenMP)
     task: 1-body & 12-body chains, 48 tasks x 4,000 steps/task
     claim: "1body: py serial 968k/s, threads w=12 51k/s (0.05x), proc_reuse w=12 5.43M/s, mj_rollout 6.44M/s, cpp_openmp w=12 10.75M/s (11.11x); 12body: 104k/s -> 566k/s (5.45x)"
     hardware: Intel i7-14650HX (WSL2 Ubuntu 24.04, 6 physical cores / 12 threads), gcc 16.2.0
     source:
       type: repo
-      title: parallel-envs v0.2.0
-      url: https://github.com/cccjj55/parallel-envs
+      title: mujoco-omp-rollout v1.1.0
+      url: https://github.com/cccjj55/mujoco-omp-rollout
     artifact: docs/parallel_scaling.svg
     label: MEASURED
     note: >
@@ -94,8 +94,8 @@ claims:
     hardware: RTX 5070 Ti Laptop 12 GB (sm_120), i7-14650HX 12 threads, gcc 16.2.0, nvcc 13.5
     source:
       type: repo
-      title: hpc-kernels v1.1.0
-      url: https://github.com/cccjj55/hpc-kernels
+      title: cuda-omp-roofline v1.2.0
+      url: https://github.com/cccjj55/cuda-omp-roofline
     artifact: docs/kernels_gpu.svg
     label: MEASURED
     note: >
@@ -112,8 +112,8 @@ claims:
     hardware: RTX 5070 Ti Laptop 12 GB, i7-14650HX 12 threads, nvcc 13.5
     source:
       type: repo
-      title: cae-parallel-solver v1.1.0
-      url: https://github.com/cccjj55/cae-parallel-solver
+      title: fem-diffusion-cuda v1.2.0
+      url: https://github.com/cccjj55/fem-diffusion-cuda
     artifact: docs/gpu_cg.svg
     label: MEASURED
     note: >

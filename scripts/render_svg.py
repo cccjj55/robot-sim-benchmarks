@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""Render docs/claims_overview.svg directly from data/claims.yaml.
+
+Keeps the visual ledger synced with the single YAML source of truth.
+"""
+from __future__ import annotations
+
+import html
+from pathlib import Path
+
+try:
+    import yaml
+except ImportError as exc:  # pragma: no cover
+    raise SystemExit("need pyyaml: pip install pyyaml") from exc
+
+ROOT = Path(__file__).resolve().parent.parent
+
+LABEL_STYLE = {
+    "MEASURED": ("#1b4721", "#3fb950", "MEASURED"),
+    "UPSTREAM": ("#132d4a", "#58a6ff", "UPSTREAM"),
+    "3P": ("#3d2800", "#d29922", "3P"),
+}
+
+
+def trunc(text: str, limit: int) -> str:
+    s = " ".join(str(text).split())
+    return s if len(s) <= limit else s[: limit - 1] + "…"
+
+
+def render(yaml_path: Path, svg_path: Path) -> None:
+    data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
+    claims = data.get("claims") or []
+
+    counts = {"MEASURED": 0, "UPSTREAM": 0, "3P": 0}
+    for c in claims:
+        lbl = c.get("label", "UPSTREAM")
+        counts[lbl] = counts.get(lbl, 0) + 1
+
+    width = 960
+    header_h = 112
+    row_h = 34
+    footer_h = 30
+    table_top = header_h
+    table_h = 32 + len(claims) * row_h
+    height = header_h + table_h + footer_h
+
+    lines = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        '<rect width="100%" height="100%" rx="12" fill="#0d1117"/>',
+        '<text x="28" y="36" fill="#f0f6fc" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">'
+        'Simulation &amp; Solver Claims Ledger — Evidence Snapshot</text>',
+        '<text x="28" y="57" fill="#8b949e" font-family="Segoe UI, Arial, sans-serif" font-size="12">'
+        'Generated from data/claims.yaml · Numbers stay next to their hardware, version, and source</text>',
+    ]
+
+    # Summary pills
+    pills = [
+        ("TOTAL", str(len(claims)), "#21262d", "#e6edf3"),
+        ("MEASURED (repo artifact)", str(counts["MEASURED"]), "#1b4721", "#3fb950"),
+        ("UPSTREAM (vendor/paper)", str(counts["UPSTREAM"]), "#132d4a", "#58a6ff"),
+        ("3P (external repro)", str(counts["3P"]), "#3d2800", "#d29922"),
+    ]
+    px = 28
+    for title, val, bg, fg in pills:
+        pw = max(130, len(title) * 7 + 44)
+        lines.append(f'<rect x="{px}" y="72" width="{pw}" height="24" rx="6" fill="{bg}" stroke="#30363d"/>')
+        lines.append(
+            f'<text x="{px + 10}" y="88" fill="{fg}" font-family="Consolas, monospace" font-size="11" font-weight="700">'
+            f'{html.escape(val)} {html.escape(title)}</text>'
+        )
+        px += pw + 10
+
+    # Table box
+    tx, tw = 28, width - 56
+    lines.append(f'<rect x="{tx}" y="{table_top}" width="{tw}" height="{table_h}" rx="8" fill="#161b22" stroke="#30363d"/>')
+    lines.append(f'<line x1="{tx}" y1="{table_top + 32}" x2="{tx + tw}" y2="{table_top + 32}" stroke="#30363d"/>')
+
+    # Columns: x offsets inside 904px usable width (tx=28..932)
+    cols = [
+        (40, "EVIDENCE"),
+        (140, "ENGINE / SOLVER"),
+        (315, "TASK"),
+        (455, "CLAIM"),
+        (715, "HARDWARE"),
+    ]
+    for cx, cname in cols:
+        lines.append(
+            f'<text x="{cx}" y="{table_top + 20}" fill="#8b949e" font-family="Segoe UI, Arial, sans-serif" '
+            f'font-size="10" font-weight="700">{cname}</text>'
+        )
+
+    for idx, c in enumerate(claims):
+        ry = table_top + 32 + idx * row_h
+        if idx > 0:
+            lines.append(f'<line x1="{tx}" y1="{ry}" x2="{tx + tw}" y2="{ry}" stroke="#21262d"/>')
+        lbl = c.get("label", "UPSTREAM")
+        bg, fg, tag = LABEL_STYLE.get(lbl, ("#21262d", "#e6edf3", lbl))
+        lines.append(f'<rect x="40" y="{ry + 7}" width="84" height="20" rx="4" fill="{bg}"/>')
+        lines.append(
+            f'<text x="82" y="{ry + 21}" text-anchor="middle" fill="{fg}" font-family="Consolas, monospace" '
+            f'font-size="10" font-weight="700">{html.escape(tag)}</text>'
+        )
+
+        engine = html.escape(trunc(c.get("engine", ""), 21))
+        task = html.escape(trunc(c.get("task", ""), 18))
+        claim = html.escape(trunc(c.get("claim", ""), 36))
+        hw = html.escape(trunc(c.get("hardware", ""), 28))
+
+        lines.append(f'<text x="140" y="{ry + 21}" fill="#f0f6fc" font-family="Segoe UI, Arial, sans-serif" font-size="11">{engine}</text>')
+        lines.append(f'<text x="315" y="{ry + 21}" fill="#c9d1d9" font-family="Consolas, monospace" font-size="10">{task}</text>')
+        lines.append(f'<text x="455" y="{ry + 21}" fill="#e6edf3" font-family="Segoe UI, Arial, sans-serif" font-size="11">{claim}</text>')
+        lines.append(f'<text x="715" y="{ry + 21}" fill="#8b949e" font-family="Consolas, monospace" font-size="10">{hw}</text>')
+
+    lines.append(
+        f'<text x="28" y="{height - 10}" fill="#8b949e" font-family="Segoe UI, Arial, sans-serif" font-size="10">'
+        'Regenerated by python scripts/render_svg.py · Validated in CI via scripts/check_claims.py</text>'
+    )
+    lines.append("</svg>")
+
+    svg_path.parent.mkdir(parents=True, exist_ok=True)
+    svg_path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"wrote {svg_path} ({len(claims)} rows)")
+
+
+if __name__ == "__main__":
+    render(ROOT / "data" / "claims.yaml", ROOT / "docs" / "claims_overview.svg")

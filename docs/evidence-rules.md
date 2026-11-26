@@ -17,7 +17,7 @@ The table is only useful if a row means the same thing to everyone reading it.
 | "10× faster than before" with no "before" | unfalsifiable |
 | throughput with no hardware | not reproducible |
 | benchmark over a model the source does not name | not comparable |
-| cherry-picked best-of-one | see the spread discussion in [sim-throughput-benchmark](https://github.com/cccjj55/sim-throughput-benchmark) |
+| cherry-picked best-of-one | see the spread discussion in [sim-dt-pareto](https://github.com/cccjj55/sim-dt-pareto) |
 | vendor launch page with no version | marketing, not measurement |
 
 ## What counts as `3P`
